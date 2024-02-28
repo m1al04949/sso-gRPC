@@ -15,7 +15,7 @@ message RegisterRequest {
     string password = 2; // Password of the user to register
 }
 
-message RegisterResponse {
+message RegisterResponse {  
     int64 user_id = 1; // User ID of the registered user
 }
 
