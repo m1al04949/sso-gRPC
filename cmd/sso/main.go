@@ -41,6 +41,7 @@ func main() {
 
 	// TODO: Storage stop
 
+	// gRPC stop
 	appl.GRPCSrv.Stop()
 
 	log.Info("application stopped")
