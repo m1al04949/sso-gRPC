@@ -2,10 +2,13 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/m1al04949/sso-gRPC/internal/domain/models"
+	"github.com/m1al04949/sso-gRPC/internal/lib/sl"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Auth struct {
@@ -65,7 +68,30 @@ func (a *Auth) RegisterNewUser(
 	email string,
 	pass string,
 ) (int64, error) {
-	panic("not implemented")
+	const op = "auth.RegisterNewUser"
+
+	log := a.log.With(slog.String("op", op), slog.String("email", email))
+
+	log.Info("registering new user")
+
+	// Salting and hashing password
+	passHash, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
+	if err != nil {
+		log.Error("failed to generate hash password", sl.Err(err))
+
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	id, err := a.userSaver.SaveUser(ctx, email, passHash)
+	if err != nil {
+		log.Error("failed to save new user", sl.Err(err))
+
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("new user registered")
+
+	return id, nil
 }
 
 // IsAdmin checks if user is admin
