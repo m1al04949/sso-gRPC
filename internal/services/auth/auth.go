@@ -2,12 +2,15 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"time"
 
 	"github.com/m1al04949/sso-gRPC/internal/domain/models"
+	"github.com/m1al04949/sso-gRPC/internal/lib/jwt"
 	"github.com/m1al04949/sso-gRPC/internal/lib/sl"
+	"github.com/m1al04949/sso-gRPC/internal/storage"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,6 +34,10 @@ type UserProvider interface {
 type AppProvider interface {
 	App(ctx context.Context, appID int) (models.App, error)
 }
+
+var (
+	ErrInvalidCredentials = errors.New("invalid credentials")
+)
 
 // New return a new instance Auth service
 func New(log *slog.Logger,
@@ -57,8 +64,46 @@ func (a *Auth) Login(
 	password string,
 	appID int,
 ) (string, error) {
+	const op = "auth.Login"
 
-	return "", nil
+	log := a.log.With(slog.String("op", op), slog.String("email", email))
+
+	log.Info("attempt to login user")
+
+	user, err := a.userProvider.User(ctx, email)
+	if err != nil {
+		if errors.Is(err, storage.ErrAppNotFound) {
+			a.log.Warn("user not found", sl.Err(err))
+
+			return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+		}
+
+		log.Error("failed to get user", sl.Err(err))
+
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	if err := bcrypt.CompareHashAndPassword(user.PassHash, []byte(password)); err != nil {
+		a.log.Info("invalid credentials", sl.Err(err))
+
+		return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)
+	}
+
+	app, err := a.appProvider.App(ctx, appID)
+	if err != nil {
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	log.Info("user login succesfull")
+
+	token, err := jwt.NewToken(user, app, a.tokenTTL)
+	if err != nil {
+		a.log.Error("failed to generate token", sl.Err(err))
+
+		return "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	return token, nil
 }
 
 // RegusterNewUser register new users in the system and return
