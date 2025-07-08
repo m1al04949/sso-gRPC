@@ -2,15 +2,17 @@ package config
 
 import (
 	"flag"
+	"log"
 	"os"
 	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
 	Env         string        `yaml:"env" env-default:"local"`
-	StoragePath string        `yaml:"storage_path" end-required:"true"`
+	StoragePath string        `yaml:"storage_path" env-required:"true"`
 	TokenTTL    time.Duration `yaml:"token_ttl" env-required:"true"`
 	GRPC        GRPCConfig    `yaml:"grpc"`
 }
@@ -48,8 +50,12 @@ func fetchConfigPath() string {
 	// --config="path/to/config.yaml"
 	flag.StringVar(&res, "config", "", "path to config file")
 	flag.Parse()
-
 	if res == "" {
+		// Load .env file
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
 		res = os.Getenv("CONFIG_PATH")
 	}
 
