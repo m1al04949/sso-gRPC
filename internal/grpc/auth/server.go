@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	ssov1 "github.com/m1al04949/contracts/contracts/gen/go/sso"
+	"github.com/m1al04949/sso-gRPC/internal/lib/validation"
 	"github.com/m1al04949/sso-gRPC/internal/services/auth"
 	"github.com/m1al04949/sso-gRPC/internal/storage"
 	"google.golang.org/grpc"
@@ -19,13 +20,11 @@ type Auth interface {
 		password string,
 		appID int,
 	) (token string, err error)
-
 	RegisterNewUser(
 		ctx context.Context,
 		email string,
 		password string,
 	) (userID int64, err error)
-
 	IsAdmin(
 		ctx context.Context,
 		userID int64,
@@ -37,22 +36,19 @@ type serverAPI struct {
 	auth Auth
 }
 
-const (
-	emptyValue = 0
-)
-
 func Register(gRPC *grpc.Server, auth Auth) {
 	ssov1.RegisterAuthServer(gRPC, &serverAPI{auth: auth})
+
 }
 
 func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.LoginResponse, error) {
 	// Validation
-	err := validateLogin(req)
+	err := validation.ValidateLogin(req)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: implement login via auth service
+	// Login via auth service
 	token, err := s.auth.Login(ctx, req.GetEmail(), req.GetPassword(), int(req.GetAppId()))
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidCredentials) {
@@ -68,8 +64,8 @@ func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.
 }
 
 func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*ssov1.RegisterResponse, error) {
-	// Validate
-	if err := validateRegister(req); err != nil {
+	// Validation
+	if err := validation.ValidateRegister(req); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +82,8 @@ func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*
 }
 
 func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ssov1.IsAdminResponse, error) {
-	if err := validateIsAdmin(req); err != nil {
+	// Validation
+	if err := validation.ValidateIsAdmin(req); err != nil {
 		return nil, err
 	}
 
@@ -100,41 +97,4 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ss
 	}
 
 	return &ssov1.IsAdminResponse{IsAdmin: isAdmin}, nil
-}
-
-func validateLogin(req *ssov1.LoginRequest) error {
-	if req.GetEmail() == "" {
-		return status.Error(codes.InvalidArgument, "email is required")
-	}
-
-	if req.GetPassword() == "" {
-		return status.Error(codes.InvalidArgument, "password is required")
-	}
-
-	if req.AppId == emptyValue {
-		return status.Error(codes.InvalidArgument, "app_id is required")
-	}
-
-	return nil
-}
-
-func validateRegister(req *ssov1.RegisterRequest) error {
-	if req.GetEmail() == "" {
-		return status.Error(codes.InvalidArgument, "email is required")
-	}
-
-	if req.GetPassword() == "" {
-		return status.Error(codes.InvalidArgument, "password is required")
-	}
-
-	return nil
-}
-
-func validateIsAdmin(req *ssov1.IsAdminRequest) error {
-
-	if req.GetUserId() == emptyValue {
-		return status.Error(codes.InvalidArgument, "user_id is required")
-	}
-
-	return nil
 }
