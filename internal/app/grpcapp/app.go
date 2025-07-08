@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"net"
 
+	authgrpc "github.com/m1al04949/sso-gRPC/internal/grpc/auth"
+
 	"google.golang.org/grpc"
 )
 
@@ -14,10 +16,10 @@ type App struct {
 	port       int
 }
 
-func New(log *slog.Logger, port int) *App {
+func New(log *slog.Logger, authService authgrpc.Auth, port int) *App {
 	gRPCServer := grpc.NewServer()
 
-	// authgrpc.Register(gRPCServer, authgrpc.Auth)
+	authgrpc.Register(gRPCServer, authService)
 
 	return &App{
 		log:        log,
@@ -35,14 +37,17 @@ func (a *App) MustRun() {
 func (a *App) Run() error {
 	const op = "grpcapp.Run"
 
-	log := a.log.With(slog.String("op", op), slog.Int("port", a.port))
+	log := a.log.With(
+		slog.String("op", op),
+		slog.Int("port", a.port))
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", a.port))
 	if err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	log.Info("gRPC server is running", slog.String("addr", l.Addr().String()))
+	log.Info("gRPC server is running",
+		slog.String("addr", l.Addr().String()))
 
 	if err := a.gRPCServer.Serve(l); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
@@ -54,8 +59,7 @@ func (a *App) Run() error {
 func (a *App) Stop() {
 	const op = "grpcapp.Stop"
 
-	a.log.With(slog.String("op", op)).
-		Info("stopping gRPC server", slog.Int("port", a.port))
+	a.log.With(slog.String("op", op)).Info("stopping gRPC server")
 
 	a.gRPCServer.GracefulStop()
 }
