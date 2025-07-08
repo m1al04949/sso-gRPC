@@ -11,3 +11,7 @@ MIGRATIONS_PATH := ./migrations
 migrate:
 	go run ./cmd/migrator --storage-path=$(STORAGE_PATH) \
 		--migrations-path=$(MIGRATIONS_PATH)
+
+# Запуск SSO
+start:
+	go run ./cmd/sso/main.go
