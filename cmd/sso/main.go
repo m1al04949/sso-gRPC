@@ -37,9 +37,11 @@ func main() {
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
 	signalIn := <-stop
-	log.Info("stopping application", slog.String("signal", signalIn.String()))
+	log.Info("stopping application",
+		slog.String("signal", signalIn.String()))
 
-	// TODO: Storage stop
+	// Storage stop
+	appl.Storage.Close()
 
 	// gRPC stop
 	appl.GRPCSrv.Stop()
