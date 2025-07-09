@@ -39,6 +39,9 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrInvalidAppID       = errors.New("invalid app id")
 	ErrUserExists         = errors.New("user already exists")
+	ErrAppNotFound        = errors.New("app not found")
+	ErrUserNotFound       = errors.New("user not found")
+	ErrInvalidPass        = errors.New("invalid email or password")
 )
 
 // New return a new instance Auth service
@@ -74,7 +77,7 @@ func (a *Auth) Login(
 
 	user, err := a.userProvider.User(ctx, email)
 	if err != nil {
-		if errors.Is(err, storage.ErrAppNotFound) {
+		if errors.Is(err, storage.ErrUserNotFound) {
 			a.log.Warn("user not found", sl.Err(err))
 
 			return "", fmt.Errorf("%s: %w", op, ErrInvalidCredentials)

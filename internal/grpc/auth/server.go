@@ -7,7 +7,6 @@ import (
 	ssov1 "github.com/m1al04949/contracts/contracts/gen/go/sso"
 	"github.com/m1al04949/sso-gRPC/internal/lib/validation"
 	"github.com/m1al04949/sso-gRPC/internal/services/auth"
-	"github.com/m1al04949/sso-gRPC/internal/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -52,9 +51,9 @@ func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.
 	token, err := s.auth.Login(ctx, req.GetEmail(), req.GetPassword(), int(req.GetAppId()))
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidCredentials) {
-			return nil, status.Error(codes.InvalidArgument, "login is bad")
+			return nil, status.Error(codes.InvalidArgument, "invalid email or password")
 		}
-		if errors.Is(err, storage.ErrAppNotFound) {
+		if errors.Is(err, auth.ErrAppNotFound) {
 			return nil, status.Error(codes.NotFound, "app not found")
 		}
 
@@ -92,7 +91,7 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ss
 
 	isAdmin, err := s.auth.IsAdmin(ctx, req.GetUserId())
 	if err != nil {
-		if errors.Is(err, storage.ErrUserNotFound) {
+		if errors.Is(err, auth.ErrUserNotFound) {
 			return nil, status.Error(codes.NotFound, "user not found")
 		}
 
