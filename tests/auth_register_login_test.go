@@ -56,7 +56,7 @@ func TestRegisterLogin_Login_HappyPath(t *testing.T) {
 	assert.Equal(t, respReg.GetUserId(), int64(claims["uid"].(float64)))
 	assert.Equal(t, email, claims["email"].(string))
 	assert.Equal(t, appID, int(claims["app_id"].(float64)))
-	assert.InDelta(t, loginTime.Add(st.Cfg.TokenTTL).Unix(), int64(claims["exp"].(float64)), deltaSeconds)
+	assert.InDelta(t, loginTime.Add(st.Cfg.JWT.TokenTTL).Unix(), int64(claims["exp"].(float64)), deltaSeconds)
 }
 
 func TestRegisterLogin_DuplicatedReg(t *testing.T) {
