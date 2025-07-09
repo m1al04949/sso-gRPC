@@ -1,6 +1,10 @@
 env: "local"
-storage_path: "./storage/sso.db"
-token_ttl: 1h
+db:
+  storage_path: "./storage/sso.db"
+  busy_timeout: "1000"
+  journal_mode: "WAL"
+jwt:
+  token_ttl: 1h
 grpc:
   port: 44044
   timeout: 60s

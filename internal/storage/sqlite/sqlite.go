@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/m1al04949/sso-gRPC/internal/config"
 	"github.com/m1al04949/sso-gRPC/internal/domain/models"
 	"github.com/m1al04949/sso-gRPC/internal/storage"
 	"modernc.org/sqlite"
@@ -19,10 +20,12 @@ type Storage struct {
 }
 
 // New instance of storage
-func New(log *slog.Logger, storagePath string) (*Storage, error) {
+func New(log *slog.Logger, dbCfg config.DBConfig) (*Storage, error) {
 	const op = "storage.sqlite.New"
 
-	db, err := sql.Open("sqlite", fmt.Sprintf("file:%s", storagePath))
+	db, err := sql.Open("sqlite",
+		fmt.Sprintf("file:%s?_busy_timeout=%s&_journal_mode=%s",
+			dbCfg.StoragePath, dbCfg.BusyTimeout, dbCfg.JournalMode))
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}

@@ -27,7 +27,7 @@ func main() {
 		slog.Any("cfg", cfg))
 
 	// Initialize App
-	appl := app.New(log, cfg.GRPC.Port, cfg.StoragePath, cfg.TokenTTL)
+	appl := app.New(log, cfg.GRPC.Port, cfg.DB, cfg.JWT.TokenTTL)
 
 	// gRPC Server Run
 	go appl.GRPCSrv.MustRun()

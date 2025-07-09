@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/m1al04949/sso-gRPC/internal/app/grpcapp"
+	"github.com/m1al04949/sso-gRPC/internal/config"
 	"github.com/m1al04949/sso-gRPC/internal/services/auth"
 	"github.com/m1al04949/sso-gRPC/internal/storage/sqlite"
 )
@@ -14,9 +15,9 @@ type App struct {
 	Storage *sqlite.Storage
 }
 
-func New(log *slog.Logger, grpcPort int, storagePath string, tokenTTL time.Duration) *App {
+func New(log *slog.Logger, grpcPort int, dbCfg config.DBConfig, tokenTTL time.Duration) *App {
 	// Init storage
-	storage, err := sqlite.New(log, storagePath)
+	storage, err := sqlite.New(log, dbCfg)
 	if err != nil {
 		panic(err)
 	}
